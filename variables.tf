@@ -1,11 +1,18 @@
-variable "dockerfile_dir" {
-  type = string
-  description = "The directory that contains the Dockerfile"
+variable "dockerfile" {
+  type        = string
+  description = "The Dockerfile path"
+  default     = "Dockerfile"
 }
 
 variable "ecr_repository_url" {
   type        = string
   description = "Full url for the ECR repository"
+}
+
+variable "context" {
+  type        = string
+  description = "Context directory"
+  default     = "."
 }
 
 variable "docker_image_tag" {

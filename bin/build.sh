@@ -6,23 +6,28 @@
 set -e
 
 # This is the order of arguments
-build_folder=$1
-aws_ecr_repository_url_with_tag=$2
+REGISTRY_URL=$1
+IMAGE_WITH_TAG=$2
+DOCKERFILE=$3
+CONTEXT=$4
+FULL_IMAGE="${REGISTRY_URL}/${IMAGE_WITH_TAG}"
 
 # Check that aws is installed
-which aws > /dev/null || { echo 'ERROR: aws-cli is not installed' ; exit 1; }
-
-# Connect into aws
-$(aws ecr get-login --no-include-email) || { echo 'ERROR: aws ecr login failed' ; exit 1; }
+which aws > /dev/null || { echo 'Error: aws-cli is not installed' ; exit 1; }
 
 # Check that docker is installed and running
-which docker > /dev/null && docker ps > /dev/null || { echo 'ERROR: docker is not running' ; exit 1; }
+which docker > /dev/null && docker ps > /dev/null || { echo 'Error: docker is not running' ; exit 1; }
 
-# Some Useful Debug
-echo "Building $aws_ecr_repository_url_with_tag from $build_folder/Dockerfile"
+echo "Building $FULL_IMAGE from $DOCKERFILE"
+docker build -t $FULL_IMAGE -f $DOCKERFILE $CONTEXT
 
-# Build image
-docker build -t $aws_ecr_repository_url_with_tag $build_folder
+echo "Connect into aws"
+aws ecr get-login-password | docker login --username AWS --password-stdin $REGISTRY_URL
 
-# Push image
-docker push $aws_ecr_repository_url_with_tag
+if [[ "$?" != "0" ]]; then
+  echo "Error: aws ecr docker login failed"
+  exit 1
+fi
+
+echo "Push image $FULL_IMAGE"
+docker push $FULL_IMAGE

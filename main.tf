@@ -1,13 +1,11 @@
-terraform {
-  required_version = ">= 0.12.16"
-  required_providers {
-    aws = ">= 2.42"
-  }
+locals {
+  registry_url = split("/", var.ecr_repository_url)[0]
+  name         = split("/", var.ecr_repository_url)[1]
 }
 
 # Checks if build folder has changed
 data "external" "build_dir" {
-  program = ["bash", "${path.module}/bin/dir_md5.sh", var.dockerfile_dir]
+  program = ["bash", "${path.module}/bin/dir_md5.sh", var.context]
 }
 
 # Builds test-service and pushes it into aws_ecr_repository
@@ -18,6 +16,6 @@ resource "null_resource" "ecr_image" {
 
   # Runs the build.sh script which builds the dockerfile and pushes to ecr
   provisioner "local-exec" {
-    command = "bash ${path.module}/bin/build.sh ${var.dockerfile_dir} ${var.ecr_repository_url}:${var.docker_image_tag}"
+    command = "bash ${path.module}/bin/build.sh ${local.registry_url} ${local.name}:${var.docker_image_tag} ${var.dockerfile} ${var.context}"
   }
 }
