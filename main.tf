@@ -1,10 +1,15 @@
 locals {
   build_arg = var.build_arg != null ? "--build-arg=${var.build_arg}" : ""
+  region = var.region == "" ? data.aws_region.current.name : var.region
+  account_id = data.aws_caller_identity.current.account_id
 }
 # Checks if build folder has changed
 data "external" "build_dir" {
   program = ["bash", "${path.module}/bin/dir_md5.sh", var.context]
 }
+
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 
 # Builds test-service and pushes it into aws_ecr_repository
 resource "null_resource" "ecr_image" {
@@ -19,12 +24,15 @@ resource "null_resource" "ecr_image" {
 
   # Runs the build.sh script which builds the dockerfile and pushes to ecr
   provisioner "local-exec" {
-    command = "bash ${path.module}/bin/build.sh ${var.ecr_name} ${var.docker_image_tag} ${var.dockerfile} ${var.context} ${var.region} ${var.aws_account_id} \"${local.build_arg}\""
+    command = "bash ${path.module}/bin/build.sh ${var.ecr_name} ${var.docker_image_tag} ${var.dockerfile} ${var.context} ${local.region} ${local.account_id} \"${local.build_arg}\""
   }
-}
 
-data "aws_caller_identity" "current" {
-
+  lifecycle {
+    precondition {
+      condition     = fileexists(var.dockerfile)
+      error_message = "${var.dockerfile} not found in the directory \"${path.root}\"."
+    }
+  }
 }
 
 output "id" {

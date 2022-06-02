@@ -3,14 +3,10 @@ variable "ecr_name" {
   type        = string
 }
 
-variable "aws_account_id" {
-  description = "AWS account id (12-digit number)"
-  type        = string
-}
-
 variable "region" {
   description = "AWS region name"
   type        = string
+  default     = ""
 }
 
 variable "dockerfile" {
