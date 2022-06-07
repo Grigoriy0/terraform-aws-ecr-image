@@ -27,12 +27,6 @@ resource "null_resource" "ecr_image" {
     command = "bash ${path.module}/bin/build.sh ${var.ecr_name} ${var.docker_image_tag} ${var.dockerfile} ${var.context} ${local.region} ${local.account_id} \"${local.build_arg}\""
   }
 
-  lifecycle {
-    precondition {
-      condition     = fileexists(var.dockerfile)
-      error_message = "${var.dockerfile} not found in the directory \"${path.root}\"."
-    }
-  }
 }
 
 output "id" {
